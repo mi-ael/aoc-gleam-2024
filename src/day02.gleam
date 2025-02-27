@@ -36,30 +36,41 @@ fn is_safe_report(levels: List(Int)) -> Bool {
         list.window_by_2(levels)
         |> list.map(fn(pair) { pair.1 - pair.0 })
       
-      // All differences must have the same sign (all increasing or all decreasing)
-      let all_same_direction =
-        differences
-        |> list.all(fn(diff) {
-          case differences {
-            [first, ..] -> 
-              // Check if all differences have the same sign as the first one
-              case first > 0 {
-                True -> diff > 0  // All should be positive
-                False -> diff < 0  // All should be negative
-              }
-            _ -> True  // Only one difference, so direction is consistent
+      // Check if we have any differences
+      case differences {
+        [] -> False
+        [first, ..rest] -> {
+          // All differences must have the same sign (all increasing or all decreasing)
+          let is_increasing = first > 0
+          let is_decreasing = first < 0
+          
+          // If first difference is 0, it's not valid
+          case is_increasing || is_decreasing {
+            False -> False
+            True -> {
+              // All differences must be in the same direction
+              let all_same_direction = 
+                rest
+                |> list.all(fn(diff) {
+                  case is_increasing {
+                    True -> diff > 0
+                    False -> diff < 0
+                  }
+                })
+              
+              // All differences must be between 1 and 3 in absolute value
+              let all_valid_differences =
+                differences
+                |> list.all(fn(diff) {
+                  let abs_diff = int.absolute_value(diff)
+                  abs_diff >= 1 && abs_diff <= 3
+                })
+              
+              all_same_direction && all_valid_differences
+            }
           }
-        })
-      
-      // All differences must be between 1 and 3 in absolute value
-      let all_valid_differences =
-        differences
-        |> list.all(fn(diff) {
-          let abs_diff = int.absolute_value(diff)
-          abs_diff >= 1 && abs_diff <= 3
-        })
-      
-      all_same_direction && all_valid_differences
+        }
+      }
     }
   }
 }
